@@ -765,6 +765,7 @@ class ServicesFrame(customtkinter.CTkFrame):
         search_for = data_to_write['Поръчка']
         data_to_write['Поръчка'] = self.order_number
 
+
         find_order,text,found, df = self.__find_order_func(searched_number=search_for, df=df)
         if found:
             data_to_write['Поръчка'] = find_order['Поръчка']
@@ -816,14 +817,20 @@ class ServicesFrame(customtkinter.CTkFrame):
     def __find_order_func(self,searched_number=None,df=False):
         # df = pd.read_excel('service.xlsx')
         searched_number = searched_number or self.entry.get()
-        mask = df['Поръчка'] == int(searched_number)
-        text = (f"Не е намерен сервизен протокол с номе: {searched_number}")
-        data = df.loc[mask]
-        if mask.any():
-            data = data.iloc[0]
-            text = (f"Протоколът с номер {data['Поръчка']} е открит.")
-            return data,text, True,df
-        return None,text, False, df
+        text = (f"Не е намерен сервизен протокол с номер: {searched_number}")
+        if searched_number:
+            mask = df['Поръчка'] == int(searched_number)
+            text = (f"Не е намерен сервизен протокол с номе: {searched_number}")
+            data = df.loc[mask]
+            if mask.any():
+                data = data.iloc[0]
+                text = (f"Протоколът с номер {data['Поръчка']} е открит.")
+                return data,text, True,df
+        if searched_number == '' or searched_number == ' ':
+            data = df
+            return data, text, False, df
+        data = pd.DataFrame()
+        return data, text, False, df
 
     def __find_order(self):
         df = pd.read_excel(services_path)
@@ -855,10 +862,16 @@ class ServicesFrame(customtkinter.CTkFrame):
             else:
                 self.good_condition.deselect()
             self.status_order.set(data['Статус'])
+            self.__print_message(text)
+        elif not data.empty:
+            data = df.loc[:, ['Поръчка','Марка', 'Модел', 'IMEI','Описание на дефекта','Гаранция','Дата']]
+            data = data.to_string()
+
+            self.__print_message(data)
+            self.print_button.configure(state='disabled')
         else:
             self.print_button.configure(state='disabled')
-
-        self.__print_message(text)
+            self.__print_message(text)
 
     def __clear_values(self):
 
